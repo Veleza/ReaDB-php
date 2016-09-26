@@ -1,0 +1,8 @@
+{
+    "name": "veleza/readb-php",
+    "autoload": {
+        "psr-0" : {
+            "Veleza\\ReaDB" : "src"
+        }
+    }
+}
