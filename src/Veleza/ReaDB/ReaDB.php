@@ -18,7 +18,7 @@ class ReaDB
 
     private function createContext() {
         if (!$this->context) {
-            $this->context = new ZMQContext(1);
+            $this->context = new \ZMQContext(1);
         }
     }
 
@@ -27,11 +27,11 @@ class ReaDB
             return;
         }
         if (!$this->host || !$this->req_port) {
-            throw new Exception('Request requires a host and a req_port options to be set!');
+            throw new \Exception('Request requires a host and a req_port options to be set!');
         }
         $this->createContext();
         echo sprintf('%s:%s', $this->host, $this->req_port);
-        // $this->req_socket = new ZMQSocket($this->context, ZMQ::SOCKET_REQ);
+        // $this->req_socket = new \ZMQSocket($this->context, \ZMQ::SOCKET_REQ);
         // $this->req_socket->bind(sprintf('%s:%s', $this->host, $this->req_port));
     }
 
