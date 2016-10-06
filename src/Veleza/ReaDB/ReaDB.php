@@ -5,61 +5,71 @@ namespace Veleza\ReaDB;
 class ReaDB
 {
 
-    private $id = null;
-
     private $host = null;
-    private $req_port = 0;
-    private $sub_port = 0;
+
+    private $zmq_req_context = null;
+    private $zmq_req_socket = null;
+
+    private $zmq_sub_context = null;
+    private $zmq_sub_socket = null;
 
     private $context = null;
-    private $req_socket = null;
-    private $sub_socket = null;
 
-    public function __construct($host, $req_port = 0, $sub_port = 0) {
-        $this->id = $this->uuid4();
+    public function __construct($host) {
         $this->host = $host;
-        $this->req_port = $req_port;
-        $this->sub_port = $sub_port;
-
         if (!$this->host) {
             throw new \Exception('ReaDB requires a host parameter to be set!');
         }
-
-        if ($this->req_port) {
-            $this->context = new \ZMQContext(1);
-            $this->req_socket = new \ZMQSocket($this->context, \ZMQ::SOCKET_REQ);
-            $this->req_socket->connect(sprintf('%s:%s', $this->host, $this->req_port));
-            $this->req_socket->setSockOpt(\ZMQ::SOCKOPT_RCVTIMEO, 5000);
-            $this->req_socket->setSockOpt(\ZMQ::SOCKOPT_LINGER, 0);
-        }
     }
 
-public $reply = null;
-public $duration = 0;
+    public function connect($port) {
+        if ($this->zmq_req_context) {
+            throw new \Exception('ReaDB is already connected!');
+        }
+        $this->zmq_req_context = new \ZMQContext(1);
+        $this->zmq_req_socket = new \ZMQSocket($this->zmq_req_context, \ZMQ::SOCKET_REQ);
+        $this->zmq_req_socket->connect(sprintf('%s:%s', $this->host, $port));
+        $this->zmq_req_socket->setSockOpt(\ZMQ::SOCKOPT_RCVTIMEO, 5000);
+        $this->zmq_req_socket->setSockOpt(\ZMQ::SOCKOPT_LINGER, 0);
+    }
+
+    public function subscribe($port) {
+
+    }
+
+    public function setContext($context) {
+        $this->context = $context;
+    }
+
+    public function getContext() {
+        return $this->context;
+    }
+
+    public function get($model, $id, $include = []) {
+        $req = [
+            'model' => $model,
+            'id' => $id,
+        ];
+
+        if ($this->context) {
+            $req['context'] = $this->context;
+        }
+
+        if ($include && sizeof($include)) {
+            $req['include'] = $include;
+        }
+
+        return $this->request('get', $req);
+    }
 
     public function request($cmd, $arguments=[]) {
-        $start = microtime(true);
         $msg = [ $cmd, $arguments ];
         $data = snappy_compress(msgpack_pack($msg));
-        $reply = $this->req_socket->send($data)->recv();
+        $reply = $this->zmq_req_socket->send($data)->recv();
         if (!$reply) {
             throw new \Exception('Request timed out. ');
         }
-        $result = msgpack_unpack(snappy_uncompress($reply));
-        $this->duration = microtime(true) - $start;
-
-        $this->reply = $reply;
-        return $result;
-    }
-
-    private function uuid4() {
-        return sprintf( '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-            mt_rand( 0, 0xffff ), mt_rand( 0, 0xffff ),
-            mt_rand( 0, 0xffff ),
-            mt_rand( 0, 0x0fff ) | 0x4000,
-            mt_rand( 0, 0x3fff ) | 0x8000,
-            mt_rand( 0, 0xffff ), mt_rand( 0, 0xffff ), mt_rand( 0, 0xffff )
-        );
+        return msgpack_unpack(snappy_uncompress($reply));
     }
 
 }
