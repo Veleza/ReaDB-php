@@ -71,7 +71,8 @@ class ReaDB
         $data = $this->pack($msg);
         $reply = $this->zmq_req_socket->send($data)->recv();
         if (!$reply) {
-            unset($this->zmq_req_socket, $this->zmq_req_context);
+            $this->zmq_req_socket = null;
+            $this->zmq_req_context = null;
             $this->connect($this->port, $this->timeout);
             throw new \Exception('Request timed out. ');
         }
