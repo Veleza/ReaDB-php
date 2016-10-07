@@ -45,7 +45,7 @@ class ReaDB
         return $this->context;
     }
 
-    public function get($model, $id, $include = [], $raw = false) {
+    public function get($model, $id, $structure = [], $raw = false) {
         $req = [
             'model' => $model,
             'id' => $id,
@@ -55,8 +55,8 @@ class ReaDB
             $req['context'] = $this->context;
         }
 
-        if ($include && sizeof($include)) {
-            $req['include'] = $include;
+        if ($structure && sizeof($structure)) {
+            $req['structure'] = $structure;
         }
 
         return $this->request('get', $req, $raw);
