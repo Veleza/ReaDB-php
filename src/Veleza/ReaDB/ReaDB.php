@@ -45,7 +45,7 @@ class ReaDB
         return $this->context;
     }
 
-    public function get($model, $id, $include = []) {
+    public function get($model, $id, $include = [], $raw = false) {
         $req = [
             'model' => $model,
             'id' => $id,
@@ -59,17 +59,28 @@ class ReaDB
             $req['include'] = $include;
         }
 
-        return $this->request('get', $req);
+        return $this->request('get', $req, $raw);
     }
 
-    public function request($cmd, $arguments=[]) {
+    public function request($cmd, $arguments=[], $raw = false) {
         $msg = [ $cmd, $arguments ];
-        $data = snappy_compress(msgpack_pack($msg));
+        $data = $this->pack($msg);
         $reply = $this->zmq_req_socket->send($data)->recv();
         if (!$reply) {
             throw new \Exception('Request timed out. ');
         }
-        return msgpack_unpack(snappy_uncompress($reply));
+        if ($raw) {
+            return $reply;
+        }
+        return $this->unpack($reply);
+    }
+
+    public function pack($msg) {
+        return snappy_compress(msgpack_pack($msg));
+    }
+
+    public function unpack($msg) {
+        return msgpack_unpack(snappy_uncompress($msg));
     }
 
 }
