@@ -6,6 +6,8 @@ class ReaDB
 {
 
     private $host = null;
+    private $port = null;
+    private $timeout = null;
 
     private $zmq_req_context = null;
     private $zmq_req_socket = null;
@@ -22,14 +24,16 @@ class ReaDB
         }
     }
 
-    public function connect($port) {
+    public function connect($port, $timeout = 5000) {
+        $this->port = $port;
+        $this->timeout = $timeout;
         if ($this->zmq_req_context) {
             throw new \Exception('ReaDB is already connected!');
         }
         $this->zmq_req_context = new \ZMQContext(1);
         $this->zmq_req_socket = new \ZMQSocket($this->zmq_req_context, \ZMQ::SOCKET_REQ);
         $this->zmq_req_socket->connect(sprintf('%s:%s', $this->host, $port));
-        $this->zmq_req_socket->setSockOpt(\ZMQ::SOCKOPT_RCVTIMEO, 5000);
+        $this->zmq_req_socket->setSockOpt(\ZMQ::SOCKOPT_RCVTIMEO, $this->timeout);
         $this->zmq_req_socket->setSockOpt(\ZMQ::SOCKOPT_LINGER, 0);
     }
 
@@ -67,6 +71,8 @@ class ReaDB
         $data = $this->pack($msg);
         $reply = $this->zmq_req_socket->send($data)->recv();
         if (!$reply) {
+            unset($this->zmq_req_socket, $this->zmq_req_context);
+            $this->connect($this->port, $this->timeout);
             throw new \Exception('Request timed out. ');
         }
         if ($raw) {
