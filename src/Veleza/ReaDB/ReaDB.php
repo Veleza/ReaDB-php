@@ -59,11 +59,34 @@ class ReaDB
             $req['context'] = $this->context;
         }
 
-        if ($structure && sizeof($structure)) {
+        if ($structure && is_string($structure)) {
+            $req['scope'] = $structure;
+        }
+        else if ($structure && sizeof($structure)) {
             $req['structure'] = $structure;
         }
-
+        
         return $this->request('get', $req, $raw);
+    }
+
+    public function query($query, $args = [], $structure = [], $raw = false) {
+        $req = [
+            'query' => $query,
+            'args'  => $args,
+        ];
+
+        if ($this->context) {
+            $req['context'] = $this->context;
+        }
+
+        if ($structure && is_string($structure)) {
+            $req['scope'] = $structure;
+        }
+        else if ($structure && sizeof($structure)) {
+            $req['structure'] = $structure;
+        }
+        
+        return $this->request('query', $req, $raw);
     }
 
     public function request($cmd, $arguments=[], $raw = false) {
@@ -91,5 +114,4 @@ class ReaDB
     }
 
 }
-
 
