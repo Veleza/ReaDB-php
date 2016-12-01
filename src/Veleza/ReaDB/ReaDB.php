@@ -17,23 +17,23 @@ class ReaDB
 
     private $context = null;
 
-    public function __construct($host) {
+    public function __construct($host, $timeout = 30000) {
         $this->host = $host;
+        $this->timeout = $timeout;
         if (!$this->host) {
             throw new \Exception('ReaDB requires a host parameter to be set!');
         }
     }
 
-    public function connect($port, $timeout = 5000) {
+    public function connect($port, $timeout = 30000) {
         $this->port = $port;
-        $this->timeout = $timeout;
         if ($this->zmq_req_context) {
             throw new \Exception('ReaDB is already connected!');
         }
         $this->zmq_req_context = new \ZMQContext(1);
         $this->zmq_req_socket = new \ZMQSocket($this->zmq_req_context, \ZMQ::SOCKET_REQ);
         $this->zmq_req_socket->connect(sprintf('%s:%s', $this->host, $port));
-        $this->zmq_req_socket->setSockOpt(\ZMQ::SOCKOPT_RCVTIMEO, $this->timeout);
+        $this->zmq_req_socket->setSockOpt(\ZMQ::SOCKOPT_RCVTIMEO, $timeout);
         $this->zmq_req_socket->setSockOpt(\ZMQ::SOCKOPT_LINGER, 0);
     }
 
