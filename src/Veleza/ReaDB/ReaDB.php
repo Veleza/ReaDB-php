@@ -97,7 +97,7 @@ class ReaDB
             $this->zmq_req_socket = null;
             $this->zmq_req_context = null;
             $this->connect($this->port, $this->timeout);
-            throw new \Exception('Request timed out. ');
+            throw new \Exception(sprintf('Request timed out: %s', print_r($msg, true)));
         }
         if ($raw) {
             return $reply;
